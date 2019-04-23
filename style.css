@@ -1,0 +1,43 @@
+#map {
+    margin:0 auto;
+}
+#map td{
+    width: 40px;
+    height: 40px;
+    background: #eee;
+    text-align: center;
+}
+#map td.hasBomb {
+    background: red;
+}
+#map td.flag{
+    background: green;
+}
+#map td.open {
+    background: #ccc;
+}
+#map td.c1 {
+    color: #795548;
+}
+#map td.c2 {
+    color: #FF9800;
+}
+#map td.c3 {
+    color: #ffeb3b;
+}
+#map td.c4 {
+    color: #4CAF50;
+}
+#map td.c5 {
+    color: #00BCD4;
+}
+#map td.c6 {
+    color: #2196F3;
+}
+#map td.c7 {
+    color: #9C27B0;
+}
+#map td.c8 {
+    color: #F44336;
+}
+

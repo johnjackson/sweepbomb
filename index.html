@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>扫雷</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+    <table id="map"></table>
+    <script type="text/javascript" src="jquery.min.js"></script>
+    <script type="text/javascript">
+
+
+        $(function () {
+            var w = 10, h = 10;
+            var bomb_arr;
+            function initBomb() {
+                var count = 0;
+                let y = 0;
+                let x = 0;
+
+                while (count < 10) {
+                    y = parseInt(Math.random() * 10);
+                    x = parseInt(Math.random() * 10);
+                    if (!bomb_arr[y + '' + x]) {
+                        bomb_arr[y + '' + x] = { y, x };
+                        count++;
+                    }
+                }
+            }
+
+            var map;
+            function initMap(w = 10, h = 10) {
+                let html = '';
+
+                for (let y = 0; y < h; y++) {
+                    // html += '<tr>';
+                    map[y] = [];
+                    for (let x = 0; x < w; x++) {
+                        let hasBomb = bomb_arr[y + '' + x] ? true : false;
+                        map[y][x] = {
+                            hasBomb,
+                            status: 0,
+                            around: hasBomb ? -1 : 0
+                        };
+
+                        // html += `<td y="${y}" x="${x}" ></td>`;
+                    }
+                    // html += '</tr>';
+                }
+
+                for (let y = 0; y < h; y++) {
+                    for (let x = 0; x < w; x++) {
+                        if (!map[y][x].hasBomb) {
+                            _getAroundNumber(y, x);
+                        }
+                    }
+                }
+
+                for (let y = 0; y < h; y++) {
+                    html += '<tr>';
+                    for (let x = 0; x < w; x++) {
+                        html += `<td y="${y}" x="${x}" ></td>`; //${map[y][x].around}
+                    }
+                    html += '</tr>';
+                }
+
+                console.log(map);
+                $('#map').html(html);
+                //计算每个格子周围的地雷数
+                function _getAroundNumber(y, x) {
+                    if (x > 0 && y > 0 && map[y - 1][x - 1].hasBomb) {
+                        map[y][x].around++;
+                    }
+                    if (y > 0 && map[y - 1][x].hasBomb) {
+                        map[y][x].around++;
+                    }
+                    if (x < w - 1 && y > 0 && map[y - 1][x + 1].hasBomb) {
+                        map[y][x].around++;
+                    }
+
+                    if (x > 0 && map[y][x - 1].hasBomb) {
+                        map[y][x].around++;
+                    }
+                    if (x < w - 1 && map[y][x + 1].hasBomb) {
+                        map[y][x].around++;
+                    }
+
+                    if (x > 0 && y < h - 1 && map[y + 1][x - 1].hasBomb) {
+                        map[y][x].around++;
+                    }
+                    if (y < h - 1 && map[y + 1][x].hasBomb) {
+                        map[y][x].around++;
+                    }
+                    if (x < w - 1 && y < h - 1 && map[y + 1][x + 1].hasBomb) {
+                        map[y][x].around++;
+                    }
+                }
+            }
+
+            function init() {
+                bomb_arr = {};
+                map = [];
+                initBomb();
+                initMap(w, h);
+            }
+            init();
+            $(document)
+                .on('click', '#map td', function () {
+                    let $td = $(this);
+                    if ($td.is('.open')) {
+                        return;
+                    }
+                    let x = parseInt($td.attr('x'));
+                    let y = parseInt($td.attr('y'));
+
+                    if (map[y][x].hasBomb) {//点到雷了!
+                        // $td.addClass('hasBomb');
+                        
+                        for(let i in bomb_arr) {
+                            let xy = bomb_arr[i];
+                            $(`tr:eq(${xy.y}) td:eq(${xy.x})`).addClass('hasBomb');
+                        }
+
+                        setTimeout(()=>{
+                            alert('点到雷了');
+                            init();
+                        });
+                        
+                    } else if (map[y][x].around > 0) {//点的格子没雷,但是四周有雷的
+                        $td.addClass('open').addClass('c' + map[y][x].around).text(map[y][x].around);
+                    } else { //点的格子四周都没雷
+                        _expand(x, y);
+                    }
+                    if ($('.open').length == 90) {
+                        $('td:not(".open")').addClass('flag');
+                        setTimeout(()=>{
+                            alert('成功');
+                            init();
+                        });
+                    }
+                    function _expand(x, y) {
+                        let $td = $(`#map tr:eq(${y}) td:eq(${x})`);
+                        if ($td.is('.open')) {
+                            return;
+                        }
+                        $td.addClass('open');
+
+                        function _expandOne(x, y, expandZero = true) {
+                            map_item = map[y][x];
+                            if (map_item.around > 0) {//点的格子没雷,但是四周有雷的
+                                $td = $(`#map tr:eq(${y}) td:eq(${x})`);
+                                $td.addClass('open').addClass('c' + map_item.around).text(map_item.around);
+                            } else if (expandZero && map_item.around == 0) { //点的格子四周都没雷
+                                _expand(x, y);
+                            }
+                        }
+                        //上
+                        if (y > 0) {
+                            _expandOne(x, y - 1);
+                        }
+                        //左
+                        if (x > 0) {
+                            _expandOne(x - 1, y);
+                        }
+                        //右
+                        if (x < w - 1) {
+                            _expandOne(x + 1, y);
+                        }
+                        //下
+                        if (y < h - 1) {
+                            _expandOne(x, y + 1);
+                        }
+                        //左上
+                        if (x > 0 && y > 0) {
+                            // map[y - 1][x - 1].hasBomb
+                            _expandOne(x - 1, y - 1, false);
+                        }
+                        //右上
+                        if (x < w - 1 && y > 0) {
+                            _expandOne(x + 1, y - 1, false);
+                        }
+                        //左下
+                        if (x > 0 && y < h - 1) {
+                            _expandOne(x - 1, y + 1, false);
+                        }
+                        //右下
+                        if (x < w - 1 && y < h - 1) {
+                            _expandOne(x + 1, y + 1, false);
+                        }
+
+                    }
+
+                })
+                .on('mousedown', '#map td', function (e) {
+                    let $td = $(this);
+                    if (e.which == 3 && !$td.is('open')) {
+                        $(this).toggleClass('flag');
+                    }
+                });
+
+            document.oncontextmenu = function (e) {
+                return false;
+            }
+
+        });
+    </script>
+</body>
+
+</html>
